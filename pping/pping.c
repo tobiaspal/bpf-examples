@@ -332,7 +332,7 @@ static int parse_arguments(int argc, char *argv[], struct pping_config *config)
 			len = strlen(optarg);
 			if (len >= IF_NAMESIZE) {
 				fprintf(stderr, "interface name too long\n");
-				return -EINVAL;
+				return -ENAMETOOLONG;
 			}
 			memcpy(config->ifname, optarg, len);
 			config->ifname[len] = '\0';
@@ -2836,9 +2836,11 @@ int main(int argc, char *argv[])
 
 	err = parse_arguments(argc, argv, &config);
 	if (err) {
-		fprintf(stderr, "Failed parsing arguments:  %s\n",
+		fprintf(stderr, "Failed parsing arguments: %s\n",
 			get_libbpf_strerror(err));
-		print_usage(argv);
+		/* Usage text does not help with e.g. a missing interface */
+		if (err == -EINVAL)
+			print_usage(argv);
 		return EXIT_FAILURE;
 	}
 
